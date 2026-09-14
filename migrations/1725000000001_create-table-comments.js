@@ -4,8 +4,8 @@ export const up = (pgm) => {
     content: { type: 'TEXT', notNull: true },
     date: { type: 'TIMESTAMPTZ', notNull: true },
     owner: { type: 'VARCHAR(50)', notNull: true, references: 'users', onDelete: 'CASCADE' },
-    thread_id: { type: 'VARCHAR(50)', notNull: true, references: 'threads', onDelete: 'CASCADE' },
-    is_delete: { type: 'BOOLEAN', notNull: true, default: false },
+    'thread_id': { type: 'VARCHAR(50)', notNull: true, references: 'threads', onDelete: 'CASCADE' },
+    'is_delete': { type: 'BOOLEAN', notNull: true, default: false },
   });
 };
 export const down = (pgm) => pgm.dropTable('comments');

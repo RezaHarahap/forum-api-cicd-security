@@ -22,6 +22,7 @@ const createServer = async (container) => {
 
   // Global error handler
   app.use((error, req, res, next) => {
+    void next;
     // bila response tersebut error, tangani sesuai kebutuhan
     const translatedError = DomainErrorTranslator.translate(error);
 

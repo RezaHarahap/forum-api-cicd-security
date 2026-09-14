@@ -19,7 +19,7 @@ class JwtTokenManager extends AuthenticationTokenManager {
   async verifyAccessToken(token) {
     try {
       this._jwt.verify(token, config.auth.accessTokenKey);
-    } catch (error) {
+    } catch {
       throw new InvariantError('access token tidak valid');
     }
   }
@@ -27,7 +27,7 @@ class JwtTokenManager extends AuthenticationTokenManager {
   async verifyRefreshToken(token) {
     try {
       this._jwt.verify(token, config.auth.refreshTokenKey);
-    } catch (error) {
+    } catch {
       throw new InvariantError('refresh token tidak valid');
     }
   }

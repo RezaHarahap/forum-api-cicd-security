@@ -1,5 +1,4 @@
 import request from 'supertest';
-import pool from '../../database/postgres/pool.js';
 import createServer from '../createServer.js';
 import container from '../../container.js';
 import RepliesTableTestHelper from '../../../../tests/RepliesTableTestHelper.js';

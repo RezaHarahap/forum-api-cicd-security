@@ -1,12 +1,12 @@
 export const up = (pgm) => {
   pgm.createTable('comment_likes', {
-    user_id: {
+    'user_id': {
       type: 'VARCHAR(50)',
       notNull: true,
       references: 'users',
       onDelete: 'CASCADE',
     },
-    comment_id: {
+    'comment_id': {
       type: 'VARCHAR(50)',
       notNull: true,
       references: 'comments',

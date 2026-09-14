@@ -57,8 +57,8 @@ describe('Forum use cases', () => {
 
   it('GetThreadDetailUseCase maps deleted comments/replies and groups replies', async () => {
     const threadRepository = { verifyThreadAvailability: vi.fn().mockResolvedValue(), getThreadById: vi.fn().mockResolvedValue({ id: 'thread-1', title: 't', body: 'b', date: '2026-01-01', username: 'u' }) };
-    const commentRepository = { getCommentsByThreadId: vi.fn().mockResolvedValue([{ id: 'comment-1', content: 'hidden', is_delete: true, date: '2026-01-01', username: 'u', likeCount: 2 }]) };
-    const replyRepository = { getRepliesByCommentIds: vi.fn().mockResolvedValue([{ id: 'reply-1', comment_id: 'comment-1', content: 'hidden', is_delete: true, date: '2026-01-01', username: 'u' }]) };
+    const commentRepository = { getCommentsByThreadId: vi.fn().mockResolvedValue([{ id: 'comment-1', content: 'hidden', 'is_delete': true, date: '2026-01-01', username: 'u', likeCount: 2 }]) };
+    const replyRepository = { getRepliesByCommentIds: vi.fn().mockResolvedValue([{ id: 'reply-1', 'comment_id': 'comment-1', content: 'hidden', 'is_delete': true, date: '2026-01-01', username: 'u' }]) };
     const useCase = new GetThreadDetailUseCase({ threadRepository, commentRepository, replyRepository });
     const result = await useCase.execute('thread-1');
     expect(result.comments[0].content).toBe('**komentar telah dihapus**');
