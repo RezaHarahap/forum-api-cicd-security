@@ -3,7 +3,10 @@
   "version": "1.0.0",
   "description": "Forum API dengan Clean Architecture, CI/CD, rate limiting, dan HTTPS",
   "type": "module",
-  "main": "index.js",
+  "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "start": "node src/app.js",
     "start:dev": "nodemon src/app.js",

@@ -2,8 +2,9 @@
 
 Submission Dicoding berbasis Node.js 22, Express, PostgreSQL, dan Clean Architecture.
 Proyek mempertahankan seluruh fitur Forum API sebelumnya, menjalankan pengujian
-otomatis pada pull request, dan menyediakan deployment otomatis, rate limiting,
-serta HTTPS melalui NGINX.
+otomatis pada pull request, dan menyediakan deployment otomatis ke Vercel,
+rate limiting terdistribusi, serta HTTPS. File NGINX tetap disertakan sebagai
+artefak wajib submission dan alternatif deployment pada VPS.
 
 ## Fitur API
 
@@ -72,27 +73,51 @@ Untuk memenuhi bukti wajib Dicoding:
 
 ## Continuous Deployment
 
-`.github/workflows/cd.yml` berjalan setiap ada push/merge ke `main` atau `master`.
-Tambahkan repository secrets berikut:
+`.github/workflows/cd.yml` berjalan setiap ada push/merge ke `main`. Workflow
+menjalankan migrasi database, membangun aplikasi, melakukan production deployment
+ke Vercel, lalu memverifikasi endpoint HTTPS `/health`.
+
+### 1. Siapkan Vercel dan PostgreSQL cloud
+
+1. Import repository ini sebagai project baru di Vercel.
+2. Tambahkan PostgreSQL cloud (misalnya Neon) dan salin connection string-nya.
+3. Tambahkan environment variables berikut pada Vercel Production:
+
+| Variable | Isi |
+| --- | --- |
+| `DATABASE_URL` | connection string PostgreSQL cloud dengan SSL |
+| `ACCESS_TOKEN_KEY` | random secret yang panjang |
+| `REFRESH_TOKEN_KEY` | random secret berbeda |
+| `ACCESS_TOKEN_AGE` | `3000` |
+
+Vercel mendeteksi `server.js` sebagai aplikasi Express. Objek aplikasi diekspor
+tanpa memanggil `listen()`, sehingga cocok dijalankan sebagai Vercel Function.
+
+### 2. Tambahkan GitHub Actions secrets
+
+Ambil Project ID dan Team/User ID dari halaman Project Settings Vercel. Buat
+access token Vercel, lalu tambahkan secrets berikut di GitHub melalui
+**Settings > Secrets and variables > Actions**:
 
 | Secret | Contoh isi |
 | --- | --- |
-| `SERVER_HOST` | IP/domain server |
-| `SERVER_PORT` | `22` |
-| `SERVER_USER` | user SSH deployment |
-| `SSH_PRIVATE_KEY` | private key user deployment |
-| `DEPLOY_PATH` | `/var/www/forum-api` |
-| `APP_URL` | `https://forum-api.domainmu.com` |
+| `VERCEL_TOKEN` | access token Vercel |
+| `VERCEL_ORG_ID` | Team ID atau User ID Vercel |
+| `VERCEL_PROJECT_ID` | Project ID Vercel |
+| `DATABASE_URL` | connection string yang sama dengan Vercel |
 
-Server perlu memiliki Node.js 22, PostgreSQL, Git, NGINX, Certbot, file `.env`,
-dan repository yang sudah di-clone pada `DEPLOY_PATH`. Salin
-`deploy/forum-api.service` ke `/etc/systemd/system/forum-api.service`, sesuaikan
-user/path bila perlu, lalu aktifkan service. User deployment juga harus diberi
-izin menjalankan `sudo systemctl restart forum-api` tanpa prompt password.
+Setelah pull request di-merge ke `main`, workflow Continuous Deployment akan
+berjalan otomatis. URL production Vercel sudah memakai HTTPS.
 
 ## NGINX, limit access, dan HTTPS
 
-File `nginx.conf` ada di root proyek sesuai kriteria. Konfigurasi tersebut:
+Rate limiter aplikasi memakai PostgreSQL sehingga hitungan tetap konsisten saat
+Vercel menjalankan lebih dari satu instance. Semua request ke `/threads` dan nested
+path dibatasi 90 request per menit per alamat IP dan request berlebih mendapat
+HTTP 429.
+
+File `nginx.conf` ada di root proyek sesuai kriteria submission. Jika aplikasi
+dijalankan pada VPS, konfigurasi tersebut:
 
 - membatasi `/threads` dan seluruh nested path pada 90 request per menit;
 - mengembalikan HTTP 429 untuk request berlebih;
@@ -100,8 +125,9 @@ File `nginx.conf` ada di root proyek sesuai kriteria. Konfigurasi tersebut:
 - menggunakan TLS 1.2/1.3 dan HSTS;
 - meneruskan request ke aplikasi pada port 3000.
 
-Ganti `forum-api.example.com` dengan domain sebenarnya, terbitkan sertifikat
-Let's Encrypt, salin konfigurasi ke `/etc/nginx/conf.d/forum-api.conf`, lalu jalankan:
+Untuk opsi VPS, ganti `forum-api.example.com` dengan domain sebenarnya, terbitkan
+sertifikat Let's Encrypt, salin konfigurasi ke `/etc/nginx/conf.d/forum-api.conf`,
+lalu jalankan:
 
 ```bash
 sudo nginx -t
@@ -117,7 +143,7 @@ Contoh student notes:
 
 ```text
 Repository: https://github.com/RezaHarahap/forum-api-cicd-security
-Forum API HTTPS: https://forum-api.domainmu.com
+Forum API HTTPS: https://nama-project.vercel.app
 CI: menu Actions > Continuous Integration (tersedia run gagal dan berhasil)
 CD: menu Actions > Continuous Deployment (tersedia run berhasil)
 ```

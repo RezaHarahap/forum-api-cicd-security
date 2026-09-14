@@ -4,6 +4,8 @@ import DomainErrorTranslator from '../../Commons/exceptions/DomainErrorTranslato
 import users from '../../Interfaces/http/api/users/index.js';
 import authentications from '../../Interfaces/http/api/authentications/index.js';
 import threads from '../../Interfaces/http/api/threads/index.js';
+import pool from '../database/postgres/pool.js';
+import createThreadRateLimiter from './createThreadRateLimiter.js';
 
 const createServer = async (container) => {
   const app = express();
@@ -18,6 +20,7 @@ const createServer = async (container) => {
   // Register routes
   app.use('/users', users(container));
   app.use('/authentications', authentications(container));
+  app.use('/threads', createThreadRateLimiter(pool, 90));
   app.use('/threads', threads(container));
 
   // Global error handler
