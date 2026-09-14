@@ -4,11 +4,11 @@ export const up = (pgm) => {
       type: 'TEXT',
       notNull: true,
     },
-    ['window_start']: {
+    'window_start': {
       type: 'TIMESTAMPTZ',
       notNull: true,
     },
-    ['request_count']: {
+    'request_count': {
       type: 'INTEGER',
       notNull: true,
       default: 0,
