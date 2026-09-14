@@ -15,11 +15,11 @@ const createThreadRateLimiter = (pool, maximumRequests = 90) => async (req, res,
              VALUES($1, date_trunc('minute', CURRENT_TIMESTAMP), 1)
              ON CONFLICT (identifier, window_start)
              DO UPDATE SET request_count = request_limits.request_count + 1
-             RETURNING request_count`,
+             RETURNING request_count AS "requestCount"`,
       values: [identifier],
     });
 
-    if (result.rows[0].request_count > maximumRequests) {
+    if (result.rows[0].requestCount > maximumRequests) {
       res.set('Retry-After', '60');
       return res.status(429).json({
         status: 'fail',

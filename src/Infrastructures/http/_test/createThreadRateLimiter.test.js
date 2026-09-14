@@ -10,7 +10,7 @@ const createResponse = () => ({
 describe('createThreadRateLimiter', () => {
   it('should continue when request count is within the limit', async () => {
     const pool = {
-      query: vi.fn().mockResolvedValue({ rows: [{ request_count: 90 }] }),
+      query: vi.fn().mockResolvedValue({ rows: [{ requestCount: 90 }] }),
     };
     const req = {
       headers: { 'x-forwarded-for': '203.0.113.10, 10.0.0.1' },
@@ -31,7 +31,7 @@ describe('createThreadRateLimiter', () => {
 
   it('should respond with 429 when request count exceeds the limit', async () => {
     const pool = {
-      query: vi.fn().mockResolvedValue({ rows: [{ request_count: 91 }] }),
+      query: vi.fn().mockResolvedValue({ rows: [{ requestCount: 91 }] }),
     };
     const req = { headers: {}, ip: '127.0.0.1', socket: {} };
     const res = createResponse();
