@@ -1,0 +1,19 @@
+[Unit]
+Description=Dicoding Forum API
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=forum-api
+Group=forum-api
+WorkingDirectory=/var/www/forum-api
+Environment=NODE_ENV=production
+EnvironmentFile=/var/www/forum-api/.env
+ExecStart=/usr/bin/node src/app.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

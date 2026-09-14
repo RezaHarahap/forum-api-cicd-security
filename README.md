@@ -1,54 +1,23 @@
-# Forum API — CI/CD dan Keamanan
-
-Repository publik: https://github.com/RezaHarahap/forum-api-cicd-security
+# Forum API — CI/CD dan Security
 
 Submission Dicoding berbasis Node.js 22, Express, PostgreSQL, dan Clean Architecture.
-Proyek ini menjalankan unit, integration, serta functional test otomatis pada pull
-request; melakukan deployment otomatis pada push ke branch utama; dan menyediakan
-konfigurasi NGINX untuk HTTPS serta pembatasan akses `/threads` sebanyak 90 request
-per menit.
+Proyek mempertahankan seluruh fitur Forum API sebelumnya, menjalankan pengujian
+otomatis pada pull request, dan menyediakan deployment otomatis, rate limiting,
+serta HTTPS melalui NGINX.
 
 ## Fitur API
 
 - Registrasi, login, refresh access token, dan logout.
 - Membuat thread serta melihat detail thread.
 - Membuat dan soft-delete komentar.
-- Membuat dan soft-delete balasan komentar (opsional submission sebelumnya).
-- Menyukai dan batal menyukai komentar melalui route yang sama.
-- `likeCount` pada setiap komentar di detail thread.
-- Health check untuk verifikasi deployment.
-- Clean Architecture dan automated test lengkap.
-
-## Persyaratan lokal
-
-- Node.js 22 LTS
-- PostgreSQL 13 atau lebih baru
-
-## Menjalankan secara lokal
-
-1. Buat database `forumapi` dan `forumapi_test`.
-2. Salin `.env.example` menjadi `.env` dan `.test.env.example` menjadi `.test.env`.
-3. Sesuaikan kredensial PostgreSQL dan kunci token.
-4. Jalankan perintah berikut.
-
-```bash
-npm ci
-npm run migrate up
-npm run migrate:test up
-npm run lint
-npm run test:unit
-npm run test:integration
-npm run test:functional
-npm run test:coverage
-npm start
-```
-
-Server default berjalan pada `http://localhost:3000`. Health check tersedia di
-`GET /health`.
+- Membuat dan soft-delete balasan komentar.
+- Menyukai/batal menyukai komentar melalui route yang sama.
+- Menampilkan `likeCount` pada setiap komentar.
+- Health check deployment melalui `GET /health`.
 
 ## Endpoint
 
-| Method | Path | Token |
+| Method | Path | Access token |
 | --- | --- | --- |
 | POST | `/users` | Tidak |
 | POST | `/authentications` | Tidak |
@@ -62,57 +31,93 @@ Server default berjalan pada `http://localhost:3000`. Health check tersedia di
 | POST | `/threads/{threadId}/comments/{commentId}/replies` | Ya |
 | DELETE | `/threads/{threadId}/comments/{commentId}/replies/{replyId}` | Ya |
 
-Resource bertanda token menggunakan header `Authorization: Bearer <accessToken>`.
+Endpoint terproteksi memakai header `Authorization: Bearer <accessToken>`.
+
+## Menjalankan secara lokal
+
+Persyaratan: Node.js 22 LTS dan PostgreSQL.
+
+1. Buat database `forumapi` dan `forumapi_test`.
+2. Salin `.env.example` menjadi `.env` dan `.test.env.example` menjadi `.test.env`.
+3. Sesuaikan kredensial PostgreSQL dan JWT key.
+4. Jalankan:
+
+```bash
+npm ci
+npm run migrate up
+npm run migrate:test up
+npm run lint
+npm run test:unit
+npm run test:integration
+npm run test:functional
+npm run test:coverage
+npm start
+```
+
+Server default berjalan pada `http://localhost:3000`.
 
 ## Continuous Integration
 
-Workflow `.github/workflows/ci.yml` berjalan khusus pada pull request menuju
-`main` atau `master`. PostgreSQL service container dibuat otomatis dan workflow
-menjalankan:
+`.github/workflows/ci.yml` hanya berjalan pada pull request menuju `main` atau
+`master`. Workflow membuat PostgreSQL service container lalu menjalankan migration,
+lint, unit test, integration test, functional test, dan coverage test.
 
-1. migration database test;
-2. lint;
-3. unit test;
-4. integration test;
-5. functional/server test;
-6. coverage test.
+Untuk memenuhi bukti wajib Dicoding:
 
-Untuk memenuhi bukti Dicoding, simpan satu run pull request yang gagal, perbaiki
-test/fiturnya pada branch yang sama, lalu simpan run berikutnya yang berhasil.
-Jangan menghapus run gagal.
+1. push branch fitur dengan satu test yang sengaja gagal;
+2. buka pull request ke `main` dan tunggu CI merah;
+3. perbaiki test tersebut pada branch yang sama dan push lagi;
+4. tunggu CI hijau dan jangan menghapus run yang gagal;
+5. merge pull request setelah seluruh pemeriksaan berhasil.
 
 ## Continuous Deployment
 
-Workflow `.github/workflows/cd.yml` berjalan pada push ke `main` atau `master`.
-Tambahkan Actions secrets berikut di repository:
+`.github/workflows/cd.yml` berjalan setiap ada push/merge ke `main` atau `master`.
+Tambahkan repository secrets berikut:
 
-| Secret | Isi |
+| Secret | Contoh isi |
 | --- | --- |
 | `SERVER_HOST` | IP/domain server |
-| `SERVER_PORT` | Port SSH, biasanya `22` |
-| `SERVER_USER` | User SSH deployment |
-| `SSH_PRIVATE_KEY` | Private key untuk user deployment |
-| `DEPLOY_PATH` | Path repository di server, misalnya `/var/www/forum-api` |
+| `SERVER_PORT` | `22` |
+| `SERVER_USER` | user SSH deployment |
+| `SSH_PRIVATE_KEY` | private key user deployment |
+| `DEPLOY_PATH` | `/var/www/forum-api` |
+| `APP_URL` | `https://forum-api.domainmu.com` |
 
-Server harus sudah memiliki Node.js 22, PostgreSQL, NGINX, Certbot, repository
-yang telah di-clone, file `.env`, serta service `forum-api`. Contoh unit service
-tersedia di `deploy/forum-api.service`. User deployment harus diizinkan menjalankan
-`sudo systemctl restart forum-api` tanpa prompt password.
+Server perlu memiliki Node.js 22, PostgreSQL, Git, NGINX, Certbot, file `.env`,
+dan repository yang sudah di-clone pada `DEPLOY_PATH`. Salin
+`deploy/forum-api.service` ke `/etc/systemd/system/forum-api.service`, sesuaikan
+user/path bila perlu, lalu aktifkan service. User deployment juga harus diberi
+izin menjalankan `sudo systemctl restart forum-api` tanpa prompt password.
 
-## NGINX, rate limit, dan HTTPS
+## NGINX, limit access, dan HTTPS
 
-File `nginx.conf` berada di root submission sesuai ketentuan. Sebelum dipasang:
+File `nginx.conf` ada di root proyek sesuai kriteria. Konfigurasi tersebut:
 
-1. ganti seluruh `forum-api.example.com` dengan domain/subdomain sebenarnya;
-2. terbitkan sertifikat Let's Encrypt dengan Certbot;
-3. salin file ke `/etc/nginx/conf.d/forum-api.conf`;
-4. jalankan `sudo nginx -t` lalu reload NGINX.
+- membatasi `/threads` dan seluruh nested path pada 90 request per menit;
+- mengembalikan HTTP 429 untuk request berlebih;
+- mengalihkan HTTP ke HTTPS;
+- menggunakan TLS 1.2/1.3 dan HSTS;
+- meneruskan request ke aplikasi pada port 3000.
 
-Blok `location ^~ /threads` juga mencakup seluruh nested path dan menggunakan
-zona `rate=90r/m`. Kelebihan permintaan mendapat status HTTP `429`. Semua akses
-HTTP dialihkan ke HTTPS dan TLS dibatasi ke versi 1.2/1.3.
+Ganti `forum-api.example.com` dengan domain sebenarnya, terbitkan sertifikat
+Let's Encrypt, salin konfigurasi ke `/etc/nginx/conf.d/forum-api.conf`, lalu jalankan:
 
-## Berkas rahasia
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
 
-`.env`, `.test.env`, `node_modules`, dan hasil coverage tidak boleh dimasukkan ke
-repository atau ZIP submission. Gunakan file contoh yang disediakan sebagai acuan.
+## Berkas submission
+
+Jangan masukkan `.env`, `.test.env`, `node_modules`, atau `coverage` ke ZIP/repo.
+Sertakan URL repository publik dan URL HTTPS API yang aktif pada student notes.
+
+Contoh student notes:
+
+```text
+Repository: https://github.com/RezaHarahap/forum-api-cicd-security
+Forum API HTTPS: https://forum-api.domainmu.com
+CI: menu Actions > Continuous Integration (tersedia run gagal dan berhasil)
+CD: menu Actions > Continuous Deployment (tersedia run berhasil)
+```
