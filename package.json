@@ -1,0 +1,46 @@
+{
+  "name": "forum-api",
+  "version": "1.0.0",
+  "description": "Forum API dengan Clean Architecture, CI/CD, rate limiting, dan HTTPS",
+  "type": "module",
+  "main": "server.js",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "start": "node src/app.js",
+    "start:dev": "nodemon src/app.js",
+    "test": "NODE_ENV=test vitest --run --fileParallelism=false",
+    "test:unit": "NODE_ENV=test vitest --run --fileParallelism=false src/Commons src/Domains src/Applications src/Infrastructures/security",
+    "test:integration": "NODE_ENV=test vitest --run --fileParallelism=false src/Infrastructures/repository/_test",
+    "test:functional": "NODE_ENV=test vitest --run --fileParallelism=false src/Infrastructures/http/_test",
+    "test:watch": "NODE_ENV=test vitest --watch --fileParallelism=false",
+    "test:coverage": "NODE_ENV=test vitest --run --coverage --fileParallelism=false",
+    "migrate": "node-pg-migrate",
+    "migrate:test": "node-pg-migrate --envPath .test.env",
+    "lint": "eslint ./"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.6.1",
+    "instances-container": "^2.0.6",
+    "nanoid": "^5.0.9",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "eslint": "^9.38.0",
+    "@eslint/js": "^9.38.0",
+    "@vitest/eslint-plugin": "^1.3.26",
+    "eslint-config-dicodingacademy": "^0.9.5",
+    "node-pg-migrate": "^8.0.4",
+    "nodemon": "^3.1.9",
+    "vitest": "^4.0.17",
+    "@vitest/coverage-v8": "^4.0.17",
+    "supertest": "^7.1.4"
+  }
+}
